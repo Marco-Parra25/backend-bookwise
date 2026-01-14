@@ -1,0 +1,91 @@
+{
+  "source": "Bibliometro",
+  "scrapedAt": "2026-01-14T19:27:54.970Z",
+  "total": 12,
+  "books": [
+    {
+      "id": "bibliometro-nahima-la-larga-historia-de-edith-chahin",
+      "title": "Nahima:la larga historia de...",
+      "author": "Edith Chahín",
+      "source": "bibliometro",
+      "url": "https://bibliometro.cl/libros/nahimala-larga-historia-de-mi-madre/"
+    },
+    {
+      "id": "bibliometro-larousse-de-la-mujer-sin-autor",
+      "title": "Larousse de la mujer.",
+      "author": "Sin Autor",
+      "source": "bibliometro",
+      "url": "https://bibliometro.cl/libros/larousse-de-la-mujer/"
+    },
+    {
+      "id": "bibliometro-sergio-larrain-la-foto-per-catalina-mena",
+      "title": "Sergio Larraín, la foto per...",
+      "author": "Catalina Mena",
+      "source": "bibliometro",
+      "url": "https://bibliometro.cl/libros/sergio-larrain-la-foto-perdida/"
+    },
+    {
+      "id": "bibliometro-la-esposa-del-mercader-anna-jacobs",
+      "title": "La esposa del Mercader",
+      "author": "Anna Jacobs",
+      "source": "bibliometro",
+      "url": "https://bibliometro.cl/libros/la-esposa-del-mercader/"
+    },
+    {
+      "id": "bibliometro-tres-enigmas-para-la-organi-eduardo-mendoza",
+      "title": "Tres enigmas para la Organi...",
+      "author": "Eduardo Mendoza",
+      "source": "bibliometro",
+      "url": "https://bibliometro.cl/libros/tres-enigmas-para-la-organizacion/"
+    },
+    {
+      "id": "bibliometro-vida-artificial-un-viaje-p-eric-goles",
+      "title": "Vida artificial :un viaje p...",
+      "author": "Eric Goles",
+      "source": "bibliometro",
+      "url": "https://bibliometro.cl/libros/vida-artificial-un-viaje-personal-al-corazon-de-las-maquinas/"
+    },
+    {
+      "id": "bibliometro-la-muy-catastrofica-visita-joel-dicker",
+      "title": "La muy catastrófica visita ...",
+      "author": "Joël Dicker",
+      "source": "bibliometro",
+      "url": "https://bibliometro.cl/libros/la-muy-catastrofica-visita-al-zoo-2/"
+    },
+    {
+      "id": "bibliometro-detectives-de-la-naturaleza-sin-autor",
+      "title": "Detectives de la naturaleza.",
+      "author": "Sin Autor",
+      "source": "bibliometro",
+      "url": "https://bibliometro.cl/libros/detectives-de-la-naturaleza-2/"
+    },
+    {
+      "id": "bibliometro-molinai-el-encuentro-con-sin-autor",
+      "title": "(Molinai) :el encuentro con...",
+      "author": "Sin Autor",
+      "source": "bibliometro",
+      "url": "https://bibliometro.cl/libros/molinai-el-encuentro-con-la-naturaleza-2/"
+    },
+    {
+      "id": "bibliometro-el-acertijo-de-la-vida-greco-herna-ndez",
+      "title": "El acertijo de la vida",
+      "author": "Greco Hernández",
+      "source": "bibliometro",
+      "url": "https://bibliometro.cl/libros/el-acertijo-de-la-vida/"
+    },
+    {
+      "id": "bibliometro-el-loco-estero-alberto-blest-gana",
+      "title": "El loco Estero",
+      "author": "Alberto Blest Gana",
+      "source": "bibliometro",
+      "url": "https://bibliometro.cl/libros/el-loco-estero-2/"
+    },
+    {
+      "id": "bibliometro-diario-de-lucia-sapiens-tr-margarita-hernandez-laille",
+      "title": "Diario de Lucía Sapiens :tr...",
+      "author": "Margarita Hernández Laille",
+      "source": "bibliometro",
+      "url": "https://bibliometro.cl/libros/diario-de-lucia-sapiens-tras-los-pasos-de-darwin-por-argentina-y-chile/"
+    }
+  ]
+}
