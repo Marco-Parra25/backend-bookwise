@@ -37,6 +37,19 @@ export function scoreBook(profile, book) {
   const sim = jaccard(pTags, bTags);
   score += sim * 100;
 
+  // 1.5) similitud por TÍTULO (Fallback inteligente)
+  // Si los tags no coinciden, buscamos si el título contiene alguna palabra de los tags del usuario
+  const titleNorm = normalize(book.title);
+  let titleMatch = 0;
+  for (const t of pTags) {
+    if (titleNorm.includes(t)) {
+      titleMatch++;
+    }
+  }
+  if (titleMatch > 0) {
+    score += titleMatch * 30; // Boost significativo si el título menciona el género
+  }
+
   // 2) reglas simples (peso medio)
   const prefersShort = Boolean(profile.prefersShort);
   const difficultyMax = Number(profile.difficultyMax ?? 5);
@@ -53,7 +66,7 @@ export function scoreBook(profile, book) {
     if (bTags.includes("aventura") || bTags.includes("suspenso") || bTags.includes("fantasía")) score += 6;
   }
 
-  return { score, sim };
+  return { score, sim: sim + (titleMatch * 0.2) }; // Fake simulation increase for UI
 }
 
 export function getSimpleRecommendations(profile, booksList) {
@@ -64,9 +77,12 @@ export function getSimpleRecommendations(profile, booksList) {
         ...b,
         score,
         sim,
-        why: `Coincide con tus gustos en ${(sim * 100).toFixed(0)}%`,
+        why: (sim > 0 || score > 10)
+          ? `Coincide con tus gustos en ${(Math.min(99, sim * 100)).toFixed(0)}%`
+          : "Sugerencia para descubrir algo nuevo ✨",
       };
     })
+    .map(b => ({ ...b, score: Math.max(15, b.score) })) // Cosmetic: Minimum score of 15 to avoid "0"
     .sort((a, b) => b.score - a.score)
     .slice(0, 10);
 

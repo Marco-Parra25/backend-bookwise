@@ -1,5 +1,5 @@
 import express from 'express';
-import { getAIRecommendations } from '../services/gemini.js';
+import { getAIRecommendations } from '../services/cohere.js';
 import { getSimpleRecommendations, toTagArray } from '../utils/recommendations.js';
 import { findLibraries, getCatalog } from '../services/bibliometro.js';
 import books from '../data.json' with { type: 'json' };
@@ -67,12 +67,13 @@ router.post('/', async (req, res) => {
     // Combinar catálogos local y Bibliometro
     const allBooks = await combineCatalogs();
 
-    // Intentar usar Gemini AI primero
+    // Intentar usar Cohere AI (MODO ESTRICTO: Solo IA)
     let recommendations = await getAIRecommendations(profile, allBooks);
 
-    // Si Gemini no está disponible, usar sistema tradicional
-    if (!recommendations) {
-      recommendations = getSimpleRecommendations(profile, allBooks);
+    if (!recommendations || recommendations.error) {
+      const errorMsg = recommendations?.error || "La IA no devolvió resultados.";
+      console.log(`⚠️ Fallo AI: ${errorMsg}`);
+      return res.status(503).json({ error: `Error AI: ${errorMsg}` });
     }
 
     // Buscar bibliotecas para cada libro recomendado
