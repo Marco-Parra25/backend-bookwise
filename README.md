@@ -5,11 +5,12 @@ Backend API independiente para el sistema de recomendaciones de libros Bookwise.
 ## 🚀 Características
 
 - ✅ API REST con Express.js
-- ✅ Recomendaciones inteligentes con Gemini AI
-- ✅ Integración preparada para catálogo de Bibliometro
-- ✅ Sistema de búsqueda de bibliotecas en Santiago
-- ✅ CORS configurado para frontend
-- ✅ Completamente independiente y desplegable
+- ✅ **Recomendaciones inteligentes con Cohere AI** (Modelo `command-nightly`).
+- ✅ **Modo Estricto de IA:** Garantiza respuestas de alta calidad o reporta errores detallados.
+- ✅ **Inicialización Perezosa (Lazy Init):** Conexión robusta que asegura la carga de credenciales.
+- ✅ Integración preparada para catálogo de Bibliometro.
+- ✅ Sistema de búsqueda de bibliotecas en Santiago.
+- ✅ CORS configurado para frontend (puertos dinámicos soportados).
 
 ## 📋 Requisitos
 
@@ -40,24 +41,22 @@ Crea un archivo `.env` en la raíz del proyecto:
 PORT=3001
 
 # URL del frontend (para CORS)
+# Se admite origen dinámico (true) en desarrollo
 FRONTEND_URL=http://localhost:5173
 
-# Gemini AI API Key (opcional - para recomendaciones con IA)
-# Obtén tu API key gratis en: https://makersuite.google.com/app/apikey
-GEMINI_API_KEY=tu_api_key_aqui
+# Cohere AI API Key (Requerido para recomendaciones)
+# Obtén tu API key gratis en: https://dashboard.cohere.com/api-keys
+COHERE_API_KEY=tu_api_key_aqui
 
 # Firebase Catalog (opcional - para usar catálogo completo de Bibliometro)
-USE_FIREBASE_CATALOG=false
+USE_FIREBASE_CATALOG=true
 FIREBASE_CREDENTIALS_PATH=./firebase-credentials.json
 # O usar variable de entorno JSON:
 # FIREBASE_SERVICE_ACCOUNT={"type":"service_account",...}
 
-# Scraping de Bibliometro
-MAX_PAGES=100  # Máximo de páginas a scrapear (por defecto 100)
-
-# URL de API de Bibliometro (cuando esté disponible)
-# Contactar: contacto@programabibliometro.gob.cl
-BIBLIOMETRO_API_URL=
+# Supabase (Opcional - Base de datos de libros)
+SUPABASE_URL=...
+SUPABASE_KEY=...
 ```
 
 ## 🏃 Ejecución
@@ -66,35 +65,22 @@ BIBLIOMETRO_API_URL=
 ```bash
 npm run dev
 ```
+*El servidor se iniciará en `http://localhost:3001` y recargará automáticamente los cambios.*
 
 ### Producción
 ```bash
 npm start
 ```
 
-El servidor estará disponible en `http://localhost:3001`
-
-## 📡 Endpoints
+## 📡 Endpoints Principales
 
 ### Health Check
-```
-GET /health
-```
-Verifica el estado del servidor.
-
-**Respuesta:**
-```json
-{
-  "status": "ok",
-  "message": "Bookwise API is running"
-}
-```
+`GET /health`
+> Verifica el estado del servidor.
 
 ### Recomendaciones
-```
-POST /api/recommendations
-```
-Genera recomendaciones personalizadas de libros.
+`POST /api/recommendations`
+> Genera 10 recomendaciones personalizadas basadas en el perfil del usuario.
 
 **Body:**
 ```json
@@ -107,181 +93,53 @@ Genera recomendaciones personalizadas de libros.
 }
 ```
 
-**Respuesta:**
+**Respuesta Exitosa:**
 ```json
 {
   "recommendations": [
     {
       "id": "book-id",
-      "title": "Título del libro",
-      "author": "Autor",
-      "pages": 300,
-      "difficulty": 3,
-      "tags": ["fantasía", "aventura"],
-      "why": "Explicación personalizada...",
-      "score": 85,
-      "libraries": [
-        {
-          "name": "Bibliometro Estación Central",
-          "address": "Estación Central, Santiago",
-          "available": true,
-          "distance": "2.5 km"
-        }
-      ]
+      "title": "Dune",
+      "author": "Frank Herbert",
+      "why": "Un clásico de ciencia ficción que coincide con tus gustos de política y aventura.",
+      "score": 95,
+      "libraries": [...]
     }
   ],
-  "count": 10,
-  "xpGained": 25
+  "count": 10
 }
 ```
 
-### Catálogo de Libros
+**Respuesta de Error (AI Falló):**
+```json
+{
+  "error": "Error AI: La IA respondió pero no pude entender el formato JSON..."
+}
 ```
-GET /api/books?page=1&limit=50&search=query
-```
-Obtiene el catálogo de libros con paginación.
-
-**Query Parameters:**
-- `page` (opcional): Número de página (default: 1)
-- `limit` (opcional): Resultados por página (default: 50)
-- `search` (opcional): Término de búsqueda
-
-### Buscar Libros
-```
-GET /api/books/search?q=query
-```
-Busca libros en el catálogo.
-
-### Detalles de Libro
-```
-GET /api/books/:id
-```
-Obtiene información detallada de un libro específico.
-
-## 🔌 Integración con Bibliometro
-
-El sistema puede usar el catálogo completo de Bibliometro mediante scraping y almacenamiento en Firebase.
-
-### Opción 1: Usar Firebase (Recomendado)
-
-1. **Scrapear el catálogo de Bibliometro**:
-   ```bash
-   node scripts/scrape-bibliometro-improved.js
-   ```
-   Esto generará `bibliometro-catalog.json` con todos los libros encontrados.
-
-2. **Subir a Firebase**:
-   ```bash
-   node scripts/upload-to-firebase.js
-   ```
-
-3. **Configurar Firebase en `.env`**:
-   ```env
-   USE_FIREBASE_CATALOG=true
-   FIREBASE_CREDENTIALS_PATH=./firebase-credentials.json
-   # O usar variable de entorno:
-   # FIREBASE_SERVICE_ACCOUNT={"type":"service_account",...}
-   ```
-
-4. **Verificar estado**:
-   ```bash
-   curl http://localhost:3001/api/firebase/status
-   ```
-
-### Opción 2: API Directa (Cuando esté disponible)
-
-1. **Contactar Bibliometro**: contacto@programabibliometro.gob.cl
-2. **Configurar API URL**: Agregar `BIBLIOMETRO_API_URL` en `.env`
-3. **Listo**: El sistema se actualizará automáticamente
-
-### Scripts de Scraping Disponibles
-
-- `scrape-bibliometro-improved.js`: Script mejorado con Puppeteer (recomendado)
-- `scrape-bibliometro-puppeteer.js`: Versión anterior con Puppeteer
-- `scrape-bibliometro.js`: Versión con Cheerio (más rápido pero menos robusto)
-- `scrape-bibliometro-api.js`: Intenta usar WordPress REST API
-- `inspect-bibliometro.js`: Inspecciona la estructura HTML del sitio
-
-### Configuración de Scraping
-
-Puedes configurar el número máximo de páginas a scrapear:
-```env
-MAX_PAGES=100  # Por defecto 100, ajusta según necesites
-```
-
-El servicio está en `src/services/bibliometro.js` y maneja:
-- Búsqueda de libros en catálogo local y Bibliometro
-- Obtención de catálogo completo con paginación
-- Búsqueda de bibliotecas con disponibilidad real
-- Detalles de libros específicos
-- Integración automática con recomendaciones de Gemini
-
-## 🤖 Gemini AI
-
-Para usar recomendaciones con IA:
-
-1. Obtén tu API key gratis: https://makersuite.google.com/app/apikey
-2. Agrega `GEMINI_API_KEY` en `.env`
-3. Sin API key, el sistema usa recomendaciones tradicionales (fallback automático)
+*Nota: El frontend debe mostrar este mensaje al usuario.*
 
 ## 📁 Estructura del Proyecto
 
 ```
 backend/
 ├── src/
-│   ├── routes/              # Rutas de la API
-│   │   ├── recommendations.js
-│   │   └── books.js
+│   ├── routes/              # Rutas de la API (recommendations, books)
 │   ├── services/            # Servicios externos
 │   │   ├── bibliometro.js   # Servicio de Bibliometro
-│   │   ├── firebase-catalog.js  # Servicio de Firebase
-│   │   └── gemini.js        # Servicio de Gemini AI
+│   │   ├── cohere.js        # Servicio de Cohere AI (Reemplaza a Gemini)
+│   │   └── supabase.js      # Conexión a Base de Datos
 │   ├── utils/               # Utilidades
-│   │   └── recommendations.js
-│   ├── data.json            # Catálogo local (temporal)
 │   └── server.js            # Servidor principal
-├── scripts/                 # Scripts de utilidad
-│   ├── scrape-bibliometro-improved.js  # Scraping mejorado
-│   ├── scrape-bibliometro-puppeteer.js
-│   ├── scrape-bibliometro.js
-│   ├── scrape-bibliometro-api.js
-│   ├── inspect-bibliometro.js
-│   └── upload-to-firebase.js
-├── bibliometro-catalog.json # Catálogo scrapeado (generado)
-├── .env.example
-├── .gitignore
+├── scripts/                 # Scripts de utilidad y scraping
+├── .env                     # Variables de entorno (NO subir al repo)
 ├── package.json
 └── README.md
 ```
 
-## 🚢 Despliegue
+## 📝 Notas de Desarrollo
 
-El backend puede desplegarse en cualquier plataforma que soporte Node.js:
-
-- **Railway**: https://railway.app
-- **Render**: https://render.com
-- **Heroku**: https://heroku.com
-- **Vercel**: https://vercel.com (con serverless functions)
-- **DigitalOcean**: https://digitalocean.com
-- **AWS/Google Cloud/Azure**: Cualquier servicio de Node.js
-
-### Variables de Entorno en Producción
-
-Asegúrate de configurar:
-- `PORT`: Puerto del servidor
-- `FRONTEND_URL`: URL de tu frontend (para CORS)
-- `GEMINI_API_KEY`: (opcional) Para recomendaciones con IA
-- `BIBLIOMETRO_API_URL`: (opcional) Cuando esté disponible
-
-## 📝 Licencia
-
-ISC
+- **Cohere AI:** Se utiliza el modelo `command-nightly` a través del endpoint `chat` para asegurar compatibilidad con cuentas gratuitas trial.
+- **Hoisting Fix:** El servicio de Cohere implementa *Lazy Initialization* para evitar errores de "API Key missing" durante el arranque del servidor.
 
 ## 👤 Autor
-
-Tu nombre aquí
-
-## 🔗 Frontend
-
-El frontend de Bookwise está en un repositorio separado.
-
+Marco Parra

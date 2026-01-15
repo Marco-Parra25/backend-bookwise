@@ -12,7 +12,7 @@ const PORT = process.env.PORT || 3001;
 
 // Middlewares
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: true, // Permite cualquier origen (reflexivo) para desarrollo local
   credentials: true
 }));
 app.use(express.json());
@@ -74,13 +74,13 @@ app.listen(PORT, async () => {
   console.log(`🚀 Backend server running on http://localhost:${PORT}`);
   console.log(`📚 Bookwise API ready!`);
 
-  // Verificar Gemini
-  if (process.env.GEMINI_API_KEY) {
-    const keyPreview = process.env.GEMINI_API_KEY.substring(0, 8) + '...';
-    console.log(`✅ Gemini AI configurado correctamente (API Key: ${keyPreview})`);
+  // Verificar AI Service (Cohere)
+  if (process.env.COHERE_API_KEY) {
+    const keyPreview = process.env.COHERE_API_KEY.substring(0, 5) + '...';
+    console.log(`✅ Cohere AI configurado correctamente (API Key: ${keyPreview})`);
     console.log(`🤖 Recomendaciones con IA habilitadas`);
   } else {
-    console.log(`⚠️  GEMINI_API_KEY not set - using fallback recommendations`);
+    console.log(`⚠️  COHERE_API_KEY not set - using fallback recommendations`);
   }
 
   // Verificar Supabase
