@@ -1,145 +1,115 @@
-# 📚 Bookwise Backend API
+# 📚 Bookwise Backend
 
-Backend API independiente para el sistema de recomendaciones de libros Bookwise.
+Backend oficial para la plataforma **Bookwise**, un sistema inteligente de recomendación y disponibilidad de libros en bibliotecas públicas de Chile.
 
-## 🚀 Características
+## 🚀 Arquitectura
 
-- ✅ API REST con Express.js
-- ✅ **Recomendaciones inteligentes con Cohere AI** (Modelo `command-nightly`).
-- ✅ **Modo Estricto de IA:** Garantiza respuestas de alta calidad o reporta errores detallados.
-- ✅ **Inicialización Perezosa (Lazy Init):** Conexión robusta que asegura la carga de credenciales.
-- ✅ Integración preparada para catálogo de Bibliometro.
-- ✅ Sistema de búsqueda de bibliotecas en Santiago.
-- ✅ CORS configurado para frontend (puertos dinámicos soportados).
+El sistema utiliza una arquitectura moderna basada en **Node.js** y **Python**, desacoplando la lógica de negocio de la recolección de datos (scraping).
 
-## 📋 Requisitos
+### Stack Tecnológico
+- **Core API**: Node.js + Express (Puerto 3001)
+- **Base de Datos**: PostgreSQL (vía Supabase Connection Pooler)
+- **ORM**: Sequelize
+- **IA**: Cohere AI (Generación de recomendaciones)
+- **Scraping**: Python 3.x (Master/Worker Pattern)
 
-- Node.js v18 o superior
-- npm o yarn
+---
 
-## 🔧 Instalación
-
-```bash
-# Clonar el repositorio
-git clone <tu-repositorio>
-cd bookwise-backend
-
-# Instalar dependencias
-npm install
-
-# Configurar variables de entorno
-cp .env.example .env
-# Editar .env con tus configuraciones
-```
-
-## ⚙️ Configuración
-
-Crea un archivo `.env` en la raíz del proyecto:
-
-```env
-# Puerto del servidor
-PORT=3001
-
-# URL del frontend (para CORS)
-# Se admite origen dinámico (true) en desarrollo
-FRONTEND_URL=http://localhost:5173
-
-# Cohere AI API Key (Requerido para recomendaciones)
-# Obtén tu API key gratis en: https://dashboard.cohere.com/api-keys
-COHERE_API_KEY=tu_api_key_aqui
-
-# Firebase Catalog (opcional - para usar catálogo completo de Bibliometro)
-USE_FIREBASE_CATALOG=true
-FIREBASE_CREDENTIALS_PATH=./firebase-credentials.json
-# O usar variable de entorno JSON:
-# FIREBASE_SERVICE_ACCOUNT={"type":"service_account",...}
-
-# Supabase (Opcional - Base de datos de libros)
-SUPABASE_URL=...
-SUPABASE_KEY=...
-```
-
-## 🏃 Ejecución
-
-### Desarrollo
-```bash
-npm run dev
-```
-*El servidor se iniciará en `http://localhost:3001` y recargará automáticamente los cambios.*
-
-### Producción
-```bash
-npm start
-```
-
-## 📡 Endpoints Principales
-
-### Health Check
-`GET /health`
-> Verifica el estado del servidor.
-
-### Recomendaciones
-`POST /api/recommendations`
-> Genera 10 recomendaciones personalizadas basadas en el perfil del usuario.
-
-**Body:**
-```json
-{
-  "age": 25,
-  "goal": "entretener",
-  "prefersShort": false,
-  "difficultyMax": 4,
-  "tags": ["fantasía", "aventura", "misterio"]
-}
-```
-
-**Respuesta Exitosa:**
-```json
-{
-  "recommendations": [
-    {
-      "id": "book-id",
-      "title": "Dune",
-      "author": "Frank Herbert",
-      "why": "Un clásico de ciencia ficción que coincide con tus gustos de política y aventura.",
-      "score": 95,
-      "libraries": [...]
-    }
-  ],
-  "count": 10
-}
-```
-
-**Respuesta de Error (AI Falló):**
-```json
-{
-  "error": "Error AI: La IA respondió pero no pude entender el formato JSON..."
-}
-```
-*Nota: El frontend debe mostrar este mensaje al usuario.*
-
-## 📁 Estructura del Proyecto
+## 🏗️ Estructura del Proyecto
 
 ```
 backend/
 ├── src/
-│   ├── routes/              # Rutas de la API (recommendations, books)
-│   ├── services/            # Servicios externos
-│   │   ├── bibliometro.js   # Servicio de Bibliometro
-│   │   ├── cohere.js        # Servicio de Cohere AI (Reemplaza a Gemini)
-│   │   └── supabase.js      # Conexión a Base de Datos
-│   ├── utils/               # Utilidades
-│   └── server.js            # Servidor principal
-├── scripts/                 # Scripts de utilidad y scraping
-├── .env                     # Variables de entorno (NO subir al repo)
-├── package.json
-└── README.md
+│   ├── config/         # Configuración de BD (Sequelize)
+│   ├── controllers/    # Lógica de endpoints (Books, Recommendations)
+│   ├── models/         # Modelos de datos (Book.js)
+│   ├── routes/         # Definición de rutas API
+│   └── services/       # Servicios externos (Cohere, Cron Manager)
+├── scrapers/
+│   ├── bibliometro_urls.py    # [Master] Recolector de URLs
+│   ├── bibliometro_details.py # [Worker] Extractor de detalles
+│   └── requirements.txt       # Dependencias de Python
+└── server.js           # Punto de entrada
 ```
 
-## 📝 Notas de Desarrollo
+---
 
-- **Cohere AI:** Se utiliza el modelo `command-nightly` a través del endpoint `chat` para asegurar compatibilidad con cuentas gratuitas trial.
-- **Hoisting Fix:** El servicio de Cohere implementa *Lazy Initialization* para evitar errores de "API Key missing" durante el arranque del servidor.
+## ⚙️ Configuración e Instalación
 
-## 👤 Autor
-Marco Parra
+### 1. Requisitos Previos
+- Node.js v18+
+- Python 3.10+
+- PostgreSQL (Supabase)
+
+### 2. Variables de Entorno (`.env`)
+Crear un archivo `.env` en la raíz con:
+
+```env
+# Servidor
+PORT=3001
+API_SECRET=tu_secreto_para_scrapers
+
+# Base de Datos (Supabase Transaction Pooler)
+DATABASE_URL=postgresql://user:pass@aws-0-us-east-1.pooler.supabase.com:6543/postgres
+
+# IA Provider
+COHERE_API_KEY=tu_api_key_cohere
+```
+
+### 3. Instalación de Dependencias
+
+**Node.js (Backend):**
+```bash
+npm install
+```
+
+**Python (Scrapers):**
+Se recomienda crear un entorno virtual:
+```bash
+python -m venv .venv
+source .venv/bin/activate  # Mac/Linux
+.\.venv\Scripts\Activate   # Windows
+pip install -r scrapers/requirements.txt
+```
+
+---
+
+## 🕷️ Sistema de Scraping (Dos Fases)
+
+Para evitar bloqueos y optimizar recursos, el scraping se divide en dos procesos secuenciales gestionados por **Cron Jobs**:
+
+1.  **Fase 1: Master (`bibliometro_urls.py`)** - *03:00 AM*
+    *   Escanea sitemaps y categorías de Bibliometro.
+    *   Genera un archivo `bibliometro_final_urls.txt` con todos los enlaces a libros.
+    *   *No conecta a la BD.*
+
+2.  **Fase 2: Worker (`bibliometro_details.py`)** - *04:00 AM*
+    *   Lee el archivo de texto generado.
+    *   Visita cada link para extraer: Título, Autor, Portada y **Disponibilidad por Sucursal**.
+    *   Envía los datos a la API (`POST /api/books/batch`) usando el `API_SECRET`.
+
+---
+
+## 📡 API Endpoints Principales
+
+| Método | Endpoint | Descripción |
+| :--- | :--- | :--- |
+| `GET` | `/api/books` | Lista libros paginados. |
+| `GET` | `/api/books/search` | Búsqueda por título o autor. |
+| `POST` | `/api/recommendations` | Genera recomendación con IA. |
+| `POST` | `/api/books/batch` | **(Interno)** Carga masiva de libros desde scrapers. |
+
+---
+
+## 🧪 Comandos Útiles
+
+```bash
+# Iniciar servidor en desarrollo
+npm run dev
+
+# Ejecutar scraper manualmente (Fase 1)
+python scrapers/bibliometro_urls.py
+
+# Ejecutar scraper manualmente (Fase 2)
+python scrapers/bibliometro_details.py
+```
