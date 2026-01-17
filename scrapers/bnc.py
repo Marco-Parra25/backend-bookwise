@@ -1,26 +1,26 @@
 import requests
 from bs4 import BeautifulSoup
-import psycopg2
 import os
 import hashlib
 from dotenv import load_dotenv
 
-# Load environment variables
 load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
 
-DATABASE_URL = os.getenv('DATABASE_URL')
+API_URL = "http://localhost:3001/api/books/batch"
+API_SECRET = os.getenv('API_SECRET')
 BNC_PORTAL_URL = "https://www.bibliotecanacional.gob.cl"
-
-def get_db_connection():
-    return psycopg2.connect(DATABASE_URL)
 
 def generate_id(source, title):
     raw_id = f"{source}-{title}".lower().replace(' ', '-')
     return hashlib.md5(raw_id.encode()).hexdigest()[:12]
 
 def scrape_bnc():
-    print("🕷️  Starting Biblioteca Nacional Scraper (Real Portal)...")
+    print("🕷️  Starting BNC Scraper (API Mode)...")
     
+    if not API_SECRET:
+        print("❌ API_SECRET not found in .env")
+        return
+
     try:
         headers = {'User-Agent': 'Mozilla/5.0'}
         response = requests.get(BNC_PORTAL_URL, headers=headers)
@@ -28,77 +28,56 @@ def scrape_bnc():
         
         soup = BeautifulSoup(response.text, 'html.parser')
         
-        # Scrape "Noticias" or relevant sections which often contain book launches or cultural items
-        # Targeting generic article links
-        # Looking for 'article' tags or links inside main content
-        
         items_found = []
-        
-        # Strategy: Find links that look like content /noticias/ or /cartelera/
         links = soup.find_all('a', href=True)
         
         for link in links:
             href = link['href']
             title = link.get_text(strip=True)
             
-            if not title or len(title) < 5:
-                continue
+            if not title or len(title) < 5: continue
                 
-            # Filter for content-like URLs
             if '/noticias/' in href or '/cartelera/' in href or '/colecciones-digitales/' in href:
                 full_url = href if href.startswith('http') else f"{BNC_PORTAL_URL}{href}"
                 
-                # Basic categorization
                 tag = "noticia"
                 if "cartelera" in href: tag = "cultura"
-                if "colecciones" in href: tag = "coleccion"
                 
-                item_data = {
+                # Check image
+                img = link.find('img')
+                image_url = None
+                if img and img.get('src'):
+                     src = img['src']
+                     image_url = src if src.startswith('http') else f"{BNC_PORTAL_URL}{src}"
+
+                items_found.append({
                     "id": f"bnc_{generate_id('bnc', title)}",
                     "title": title[:255],
-                    "author": "Biblioteca Nacional", # Default
+                    "author": "Biblioteca Nacional",
                     "source": "biblioteca_nacional",
                     "url": full_url,
                     "tags": ["bnc", tag, "chile"],
-                    "imageUrl": None
-                }
-                
-                # Try to find an image nearby
-                # (Simple heuristic: look for img child)
-                img = link.find('img')
-                if img and img.get('src'):
-                     src = img['src']
-                     item_data['imageUrl'] = src if src.startswith('http') else f"{BNC_PORTAL_URL}{src}"
-                     
-                items_found.append(item_data)
+                    "imageUrl": image_url,
+                    "locations": [] # No physical locations for news
+                })
 
+        # Unique
         unique_items = {v['id']: v for v in items_found}.values()
-        print(f"🔎 Found {len(unique_items)} unique items from BNC Portal.")
+        books_list = list(unique_items)
         
-        conn = get_db_connection()
-        cur = conn.cursor()
+        print(f"📦 Sending {len(books_list)} items to Backend API...")
         
-        inserted_count = 0
-        for item in unique_items:
-            try:
-                cur.execute("""
-                    INSERT INTO books (id, title, author, source, url, tags, "imageUrl", "createdAt", "updatedAt")
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
-                    ON CONFLICT (id) DO UPDATE SET
-                        title = EXCLUDED.title,
-                        url = EXCLUDED.url,
-                        "imageUrl" = EXCLUDED."imageUrl",
-                        "updatedAt" = NOW();
-                """, (item['id'], item['title'], item['author'], item['source'], item['url'], item['tags'], item['imageUrl']))
-                inserted_count += 1
-            except Exception as e:
-                # print(f"⚠️  Skip: {e}") # Quiet error
-                conn.rollback()
-
-        conn.commit()
-        cur.close()
-        conn.close()
-        print(f"✅ Successfully processed {inserted_count} items from Biblioteca Nacional.")
+        api_headers = {
+            "Content-Type": "application/json",
+            "x-api-secret": API_SECRET
+        }
+        
+        api_response = requests.post(API_URL, json=books_list, headers=api_headers)
+        
+        if api_response.status_code == 200:
+            print(f"✅ API Success: {api_response.json().get('message')}")
+        else:
+            print(f"❌ API Error {api_response.status_code}: {api_response.text}")
         
     except Exception as e:
         print(f"❌ Error in BNC scraper: {e}")
