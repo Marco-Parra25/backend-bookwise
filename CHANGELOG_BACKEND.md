@@ -13,10 +13,11 @@ Este documento detalla todas las modificaciones realizadas al backend original p
 - **Python Scrapers**: Se migró la lógica de scraping de Node.js a Python para mayor robustez (`backend/scrapers/`).
     - `bibliometro.py`: Extrae títulos, autores y **disponibilidad real** (sucursal y stock) navegando al detalle de cada libro.
     - `bnc.py`: Conecta al portal de la Biblioteca Nacional para extraer noticias y publicaciones recientes.
-- **Microservicios (Decoupling)**: 
-    - [NUEVO] Los scrapers ya no conectan directo a la base de datos (PostgreSQL).
-    - Ahora envían los datos procesados a la API del backend via HTTP (`POST /api/books/batch`) usando un secreto compartido (`x-api-secret`).
-    - Esto permite cambiar la base de datos sin romper los scripts de scraping.
+- **Estrategia Master/Worker (Bibliometro)**:
+    - [NUEVO] Se dividió el scraping de Bibliometro en dos fases para mayor eficiencia:
+        1. `bibliometro_urls.py` (Master): Recorre sitemaps y categorías para generar una lista de URLs (`.txt`).
+        2. `bibliometro_details.py` (Worker): Procesa la lista, visita cada libro y extrae detalles + disponibilidad.
+    - Se eliminó el scraper monolítico antiguo `bibliometro.py`.
 
 ## 3. Automatización (Cron Jobs)
 - **Cron Manager (`src/services/cron.js`)**: Servicio dedicado que ejecuta los scripts de Python automáticamente todos los días a las 03:00 AM.

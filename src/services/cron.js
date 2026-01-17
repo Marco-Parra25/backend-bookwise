@@ -32,10 +32,21 @@ const runScraper = (scriptName) => {
 export const initCronJobs = () => {
     console.log('🕰️  Initializing Cron Jobs...');
 
-    // Run at 03:00 AM every day
+    // Run Master Scraper (URLs) at 03:00 AM
     cron.schedule('0 3 * * *', () => {
-        console.log('🌙 Starting Daily Scrapers...');
-        runScraper('bibliometro.py');
+        console.log('🌙 Starting Bibliometro URL Crawler...');
+        runScraper('bibliometro_urls.py');
+    });
+
+    // Run Worker Scraper (Details) at 04:00 AM
+    // Gives 1 hour for URL crawling to finish (usually takes minutes)
+    cron.schedule('0 4 * * *', () => {
+        console.log('🏗️ Starting Bibliometro Detail Extraction...');
+        runScraper('bibliometro_details.py');
+    });
+
+    // Run BNC at 05:00 AM
+    cron.schedule('0 5 * * *', () => {
         runScraper('bnc.py');
     });
 
