@@ -45,13 +45,5 @@ export const initCronJobs = () => {
         runScraper('bibliometro_details.py');
     });
 
-    // Run BNC at 05:00 AM
-    cron.schedule('0 5 * * *', () => {
-        runScraper('bnc.py');
-    });
-
-    // NOTE: Uncomment next line to run immediately on server start for testing
-    // setTimeout(() => { runScraper('bibliometro.py'); }, 5000);
-
-    console.log('✅ Cron Jobs Scheduled: Daily at 03:00 AM');
+    console.log('✅ Cron Jobs Scheduled: Daily at 03:00 AM & 04:00 AM');
 };
