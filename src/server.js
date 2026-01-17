@@ -3,7 +3,9 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import recommendationsRoutes from './routes/recommendations.js';
 import booksRoutes from './routes/books.js';
-import { supabase } from './services/supabase.js';
+import sequelize from './config/database.js';
+import './models/Book.js'; // Import models to register them
+import { initCronJobs } from './services/cron.js';
 
 dotenv.config();
 
@@ -22,33 +24,27 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'Bookwise API is running' });
 });
 
-// Supabase status check
-app.get('/api/supabase/status', async (req, res) => {
+// Database status check
+app.get('/api/db/status', async (req, res) => {
   try {
-    const hasCredentials = !!(process.env.SUPABASE_URL && process.env.SUPABASE_KEY);
+    const hasUrl = !!process.env.DATABASE_URL;
 
-    if (!hasCredentials) {
+    if (!hasUrl) {
       return res.json({
         enabled: false,
-        message: 'Supabase no configurado - faltan credenciales',
+        message: 'Base de datos no configurada - falta DATABASE_URL',
         connected: false
       });
     }
 
-    // Check connection by counting books
-    const { count, error } = await supabase
-      .from('books')
-      .select('*', { count: 'exact', head: true });
-
-    if (error) throw error;
+    // Check connection
+    await sequelize.authenticate();
 
     return res.json({
       enabled: true,
       connected: true,
-      message: 'Supabase conectado correctamente',
-      metadata: {
-        totalBooks: count
-      }
+      message: 'Base de datos (Postgres/Sequelize) conectada correctamente',
+      dialect: sequelize.getDialect()
     });
 
   } catch (error) {
@@ -72,24 +68,28 @@ app.use((err, req, res, next) => {
 
 app.listen(PORT, async () => {
   console.log(`🚀 Backend server running on http://localhost:${PORT}`);
+
+  try {
+    // Sync Database
+    await sequelize.sync({ alter: true }); // Updates schema without deleting data
+    console.log(`🗄️  Database synchronized (Sequelize)`);
+  } catch (error) {
+    console.error(`❌ Error synchronizing database:`, error.message);
+  }
+
+  // Initialize Cron Jobs
+  initCronJobs();
+
   console.log(`📚 Bookwise API ready!`);
 
   // Verificar AI Service (Cohere)
   if (process.env.COHERE_API_KEY) {
     const keyPreview = process.env.COHERE_API_KEY.substring(0, 5) + '...';
-    console.log(`✅ Cohere AI configurado correctamente (API Key: ${keyPreview})`);
-    console.log(`🤖 Recomendaciones con IA habilitadas`);
+    console.log(`✅ Cohere AI configurado correctamente`);
   } else {
-    console.log(`⚠️  COHERE_API_KEY not set - using fallback recommendations`);
+    console.log(`⚠️  COHERE_API_KEY not set`);
   }
 
-  // Verificar Supabase
-  if (process.env.SUPABASE_URL && process.env.SUPABASE_KEY) {
-    console.log(`✅ Supabase configurado`);
-  } else {
-    console.log(`⚠️  Supabase Credenciales faltantes en .env`);
-  }
-
-  console.log(`\n🔍 Verifica el estado en: http://localhost:${PORT}/api/supabase/status`);
+  console.log(`\n🔍 Verifica el estado DB en: http://localhost:${PORT}/api/db/status`);
 });
 
