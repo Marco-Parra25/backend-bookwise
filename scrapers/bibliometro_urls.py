@@ -80,7 +80,8 @@ class BibliometroMasterScraper:
             
             while True:
                 # Limit scan depth for demo purposes - REMOVE LIMIT FOR PROD
-                if page > 5: break 
+                # Limit scan depth for demo purposes - REMOVE LIMIT FOR PROD
+                # if page > 2: break 
 
                 if page == 1:
                     url = f"https://bibliometro.cl/catalogo/?categoria={cat}"
