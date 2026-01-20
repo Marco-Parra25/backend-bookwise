@@ -57,7 +57,7 @@ EJEMPLO DE RESPUESTA EXACTA:
 GENERAR RESPUESTA AHORA:`;
 
         const response = await cohere.chat({
-            model: "command-nightly",
+            model: "command-r-plus",
             message: prompt,
             temperature: 0.1, // Temperatura baja = más obediencia
             connectors: [],
@@ -66,8 +66,12 @@ GENERAR RESPUESTA AHORA:`;
         const text = response.text;
 
         const parsed = parseCohereResponse(text, books);
-        if (!parsed) console.log("⚠️ Cohere parsing failed (returned null)");
-        else console.log(`✅ Cohere returned ${parsed.length} recs`);
+        if (!parsed) {
+            console.log("⚠️ Cohere parsing failed (returned null)");
+            console.log("RAW RESPONSE:", text); // Log raw text for debugging
+        } else {
+            console.log(`✅ Cohere returned ${parsed.length} recs`);
+        }
 
         return parsed;
 
