@@ -121,6 +121,10 @@ export const batchCreateBooks = async (req, res) => {
 
     } catch (error) {
         console.error('❌ Error in batchCreateBooks:', error);
-        res.status(500).json({ error: 'Internal Server Error during batch upload' });
+        res.status(500).json({
+            error: 'Internal Server Error during batch upload',
+            details: error.message,
+            validationErrors: error.errors ? error.errors.map(e => e.message) : []
+        });
     }
 };

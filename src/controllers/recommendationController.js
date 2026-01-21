@@ -31,16 +31,27 @@ export const getRecommendations = async (req, res) => {
         // Intentar usar Cohere AI (MODO ESTRICTO: Solo IA)
         let recommendations = await getAIRecommendations(profile, plainBooks);
 
-        if (!recommendations || recommendations.error) {
-            const errorMsg = recommendations?.error || "La IA no devolvió resultados.";
-            console.log(`⚠️ Fallo AI: ${errorMsg}`);
-            return res.status(503).json({ error: `Error AI: ${errorMsg}` });
+        // --- SISTEMA DE RESILIENCIA (FALLBACK) ---
+        if (!recommendations || recommendations.length === 0) {
+            console.log("⚠️ AI Fallback activado: Generando recomendaciones por heurística de tags.");
+            recommendations = plainBooks
+                .map(book => {
+                    const matchCount = (book.tags || []).filter(t => pTags.includes(t.toLowerCase())).length;
+                    return { ...book, score: 70 + (matchCount * 5), why: "Recomendado basado en tus etiquetas preferidas." };
+                })
+                .sort((a, b) => b.score - a.score)
+                .slice(0, 10);
         }
 
-        // Buscar bibliotecas (Deshabilitado tras limpieza de mocks)
-        // const recommendationsWithLibraries = ... 
-        // Pasamos directo las recomendaciones
-        const recommendationsWithLibraries = recommendations.map(b => ({ ...b, libraries: [] }));
+        // Pasamos directo las recomendaciones y restauramos bibliotecas desde el campo 'locations'
+        const recommendationsWithLibraries = recommendations.map(b => ({
+            ...b,
+            libraries: (b.locations || []).map(loc => ({
+                name: `Bibliometro ${loc.branch}`,
+                address: `Estación de Metro ${loc.branch}, Santiago`,
+                available: loc.stock > 0
+            }))
+        }));
 
         // XP ganado
         const xpGained = 25;

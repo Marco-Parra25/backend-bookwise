@@ -87,22 +87,34 @@ function parseCohereResponse(text, books) {
 
     try {
         const jsonMatch = cleanedText.match(/\[[\s\S]*\]/);
-        if (!jsonMatch) return null;
+        if (!jsonMatch) {
+            console.warn("⚠️ No se encontró un JSON array en la respuesta de Cohere.");
+            return null;
+        }
 
         const recommendations = JSON.parse(jsonMatch[0]);
-        if (!Array.isArray(recommendations) || recommendations.length === 0) return null;
+        if (!Array.isArray(recommendations)) return null;
 
-        return recommendations.map((rec) => {
-            const book = books.find((b) => b.id === rec.id);
-            if (!book) return null;
+        const results = recommendations.map((rec) => {
+            // Limpiar ID por si la IA incluyó comillas o espacios extras
+            const cleanId = String(rec.id || "").replace(/["']/g, "").trim();
+            const book = books.find((b) => b.id === cleanId);
+
+            if (!book) {
+                console.log(`🕵️ Hallucination check: AI returned unknown ID "${cleanId}"`);
+                return null;
+            }
+
             return {
                 ...book,
-                why: rec.why || `Recomendado para ti`,
+                why: rec.why || `Elegido por su afinidad con tu perfil.`,
                 score: Math.min(100, Math.max(70, rec.score || 80)),
             };
         }).filter(Boolean);
+
+        return results;
     } catch (e) {
-        console.warn("Error parsing Cohere JSON:", e.message);
+        console.warn("❌ Error parseando JSON de Cohere:", e.message);
         return null;
     }
 }
