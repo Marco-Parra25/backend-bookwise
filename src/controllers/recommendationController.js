@@ -61,6 +61,8 @@ export const getRecommendations = async (req, res) => {
                 id: b.id,
                 title: b.title,
                 author: b.author,
+                category: b.category,
+                description: b.description || b.summary,
                 pages: b.pages,
                 difficulty: b.difficulty,
                 tags: b.tags,
