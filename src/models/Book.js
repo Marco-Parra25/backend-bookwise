@@ -42,6 +42,18 @@ const Book = sequelize.define('Book', {
     locations: {
         type: DataTypes.JSONB, // Stores availability array e.g. [{"branch": "Baquedano", "stock": 1}]
         defaultValue: []
+    },
+    category: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    description: {
+        type: DataTypes.TEXT,
+        allowNull: true
+    },
+    summary: {
+        type: DataTypes.TEXT,
+        allowNull: true
     }
 }, {
     tableName: 'books', // Explicit table name
