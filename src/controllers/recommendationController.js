@@ -23,6 +23,12 @@ export const getRecommendations = async (req, res) => {
         // Convert Sequelize instances to plain objects
         const plainBooks = allBooks.map(b => b.toJSON());
 
+        // DEBUG: Check source data
+        if (plainBooks.length > 0) {
+            console.log("DEBUG SOURCE BOOK 0:", JSON.stringify(plainBooks[0].title, null, 2));
+            console.log("DEBUG SOURCE BOOK 0 DESC:", plainBooks[0].description ? "YES" : "NO");
+        }
+
         if (plainBooks.length === 0) {
             console.log("⚠️ DB vacía, no hay libros para recomendar.");
             // Podríamos cargar fallback data.json si quisiéramos, pero por ahora estricto DB.

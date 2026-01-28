@@ -108,7 +108,7 @@ export const batchCreateBooks = async (req, res) => {
         // Bulk upsert
         // We assume 'id' is present. If not, logic might fail, but scrapers generate it.
         const result = await Book.bulkCreate(booksData, {
-            updateOnDuplicate: ['title', 'author', 'url', 'imageUrl', 'tags', 'locations', 'updatedAt']
+            updateOnDuplicate: ['title', 'author', 'url', 'imageUrl', 'tags', 'locations', 'category', 'description', 'summary', 'updatedAt']
         });
 
         console.log(`✅ Batch Upload Success: ${result.length} processed.`);
