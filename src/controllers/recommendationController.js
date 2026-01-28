@@ -42,8 +42,29 @@ export const getRecommendations = async (req, res) => {
             console.log("⚠️ AI Fallback activado: Generando recomendaciones por heurística de tags.");
             recommendations = plainBooks
                 .map(book => {
-                    const matchCount = (book.tags || []).filter(t => pTags.includes(t.toLowerCase())).length;
-                    return { ...book, score: 70 + (matchCount * 5), why: "Recomendado basado en tus etiquetas preferidas." };
+
+                    let score = 70;
+
+                    // Estrategia de coincidencia profunda
+                    const textToSearch = `${book.title} ${book.category || ''} ${book.description || ''} ${(book.tags || []).join(' ')}`.toLowerCase();
+
+                    pTags.forEach(tag => {
+                        const t = tag.toLowerCase();
+                        if (textToSearch.includes(t)) {
+                            score += 5; // +5 por cada coincidencia parcial
+                        }
+                        if ((book.tags || []).map(bt => bt.toLowerCase()).includes(t)) {
+                            score += 10; // +10 extra si es un tag explícito
+                        }
+                    });
+
+                    // Bonus por tener descripción enriquecida
+                    if (book.description && book.description.length > 50) score += 2;
+
+                    // Cap en 99%
+                    score = Math.min(99, score);
+
+                    return { ...book, score, why: "Recomendado basado en tus intereses y lectura del contenido." };
                 })
                 .sort((a, b) => b.score - a.score)
                 .slice(0, 10);
