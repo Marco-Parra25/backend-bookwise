@@ -1,115 +1,97 @@
-# 📚 Bookwise Backend
+# 📚 Bookwise Backend - Motor de Inteligencia y Datos
 
-Backend oficial para la plataforma **Bookwise**, un sistema inteligente de recomendación y disponibilidad de libros en bibliotecas públicas de Chile.
+Backend oficial para la plataforma **Bookwise**, encargado de la orquestación de datos, generación de recomendaciones mediante IA y recolección automatizada de catálogo (scraping).
 
-## 🚀 Arquitectura
+## 🚀 Arquitectura Pro
 
-El sistema utiliza una arquitectura moderna basada en **Node.js** y **Python**, desacoplando la lógica de negocio de la recolección de datos (scraping).
+El sistema utiliza una arquitectura desacoplada basada en **ES Modules (Node.js)** y **Python 3.10+**, optimizando la recolección de datos y la entrega de recomendaciones en tiempo real.
 
 ### Stack Tecnológico
-- **Core API**: Node.js + Express (Puerto 3001)
-- **Base de Datos**: PostgreSQL (vía Supabase Connection Pooler)
-- **ORM**: Sequelize
-- **IA**: Cohere AI (Generación de recomendaciones)
-- **Scraping**: Python 3.x (Master/Worker Pattern)
+- **Core API**: Node.js + Express 5 (Puerto 3001)
+- **Base de Datos**: PostgreSQL (Infraestructura gestionada en Supabase)
+- **ORM**: Sequelize 6 para modelado de datos robusto
+- **IA Engine**: Cohere AI / Gemini (Generación de contexto de lectura)
+- **Scraping Engine**: Python v3 (Arquitectura Master/Worker para evitar bloqueos)
+- **Automatización**: node-cron para tareas programadas de mantenimiento de base de datos
 
 ---
 
 ## 🏗️ Estructura del Proyecto
 
 ```
-backend/
+backend-bookwise/
 ├── src/
-│   ├── config/         # Configuración de BD (Sequelize)
-│   ├── controllers/    # Lógica de endpoints (Books, Recommendations)
-│   ├── models/         # Modelos de datos (Book.js)
-│   ├── routes/         # Definición de rutas API
-│   └── services/       # Servicios externos (Cohere, Cron Manager)
-├── scrapers/
-│   ├── bibliometro_urls.py    # [Master] Recolector de URLs
-│   ├── bibliometro_details.py # [Worker] Extractor de detalles
-│   └── requirements.txt       # Dependencias de Python
-└── server.js           # Punto de entrada
+│   ├── config/         # Configuración de base de datos (PostgreSQL/Supabase)
+│   ├── controllers/    # Lógica de endpoints (Búsqueda y Recomendaciones)
+│   ├── models/         # Definición de esquemas de datos (Sequelize)
+│   ├── routes/         # Capa de enrutamiento REST
+│   └── services/       # Integraciones externas (IA, Cron Jobs)
+├── scrapers/           # 🕸️ Motor de Scraping en Python
+│   ├── bibliometro_urls.py    # Recolección de índices
+│   └── bibliometro_details.py # Extracción profunda de datos
+└── server.js           # Punto de entrada principal
 ```
 
 ---
 
-## ⚙️ Configuración e Instalación
+## ⚙️ Instalación y Configuración
 
-### 1. Requisitos Previos
-- Node.js v18+
-- Python 3.10+
-- PostgreSQL (Supabase)
+### 1. Variables de Entorno (`.env`)
+Configura las credenciales esenciales en la raíz del proyecto. 
 
-### 2. Variables de Entorno (`.env`)
-Crear un archivo `.env` en la raíz con:
+> [!WARNING]
+> **SEGURIDAD**: Nunca compartas ni subas tu archivo `.env` real al repositorio. Las llaves a continuación son **ejemplos** y deben ser reemplazadas por tus propias credenciales privadas.
+
+Crea un archivo llamado `.env` y añade lo siguiente:
 
 ```env
-# Servidor
 PORT=3001
-API_SECRET=tu_secreto_para_scrapers
-
-# Base de Datos (Supabase Transaction Pooler)
-DATABASE_URL=postgresql://user:pass@aws-0-us-east-1.pooler.supabase.com:6543/postgres
-
-# IA Provider
-COHERE_API_KEY=tu_api_key_cohere
+API_SECRET=tu_secreto_seguro_aqui
+DATABASE_URL=postgresql://usuario:password@host:puerto/dbname
+COHERE_API_KEY=tu_token_de_ia_privado
 ```
 
-### 3. Instalación de Dependencias
+### 2. Despliegue de Dependencias
 
-**Node.js (Backend):**
+**Entorno Node.js:**
 ```bash
 npm install
 ```
 
-**Python (Scrapers):**
-Se recomienda crear un entorno virtual:
+**Entorno Python (Scrapers):**
 ```bash
 python -m venv .venv
-source .venv/bin/activate  # Mac/Linux
-.\.venv\Scripts\Activate   # Windows
+# Activar según OS y luego:
 pip install -r scrapers/requirements.txt
 ```
 
 ---
 
-## 🕷️ Sistema de Scraping (Dos Fases)
+## 📡 API Endpoints (REST)
 
-Para evitar bloqueos y optimizar recursos, el scraping se divide en dos procesos secuenciales gestionados por **Cron Jobs**:
-
-1.  **Fase 1: Master (`bibliometro_urls.py`)** - *03:00 AM*
-    *   Escanea sitemaps y categorías de Bibliometro.
-    *   Genera un archivo `bibliometro_final_urls.txt` con todos los enlaces a libros.
-    *   *No conecta a la BD.*
-
-2.  **Fase 2: Worker (`bibliometro_details.py`)** - *04:00 AM*
-    *   Lee el archivo de texto generado.
-    *   Visita cada link para extraer: Título, Autor, Portada y **Disponibilidad por Sucursal**.
-    *   Envía los datos a la API (`POST /api/books/batch`) usando el `API_SECRET`.
-
----
-
-## 📡 API Endpoints Principales
-
-| Método | Endpoint | Descripción |
+| Método | Ruta | Descripción |
 | :--- | :--- | :--- |
-| `GET` | `/api/books` | Lista libros paginados. |
-| `GET` | `/api/books/search` | Búsqueda por título o autor. |
-| `POST` | `/api/recommendations` | Genera recomendación con IA. |
-| `POST` | `/api/books/batch` | **(Interno)** Carga masiva de libros desde scrapers. |
+| `GET` | `/api/books` | Catálogo completo (paginado) |
+| `GET` | `/api/books/search?q=...` | Búsqueda semántica por título/autor |
+| `POST` | `/api/recommendations` | Generación de perfil de lectura mediante IA |
+| `POST` | `/api/books/batch` | Carga masiva (uso restringido para scrapers) |
 
 ---
 
-## 🧪 Comandos Útiles
+## 🕷️ Sistema de Automatización (Cron Jobs)
 
-```bash
-# Iniciar servidor en desarrollo
-npm run dev
+El backend gestiona la actualización del catálogo de forma transparente:
+1.  **Sincronización de URLs**: Cada madrugada se recolectan nuevos enlaces de Bibliometro.
+2.  **Extracción de Stock**: Los workers de Python actualizan la disponibilidad por sucursal.
+3.  **Inyección de Datos**: Los datos procesados se integran automáticamente en Supabase vía API interna protegida.
 
-# Ejecutar scraper manualmente (Fase 1)
-python scrapers/bibliometro_urls.py
+---
 
-# Ejecutar scraper manualmente (Fase 2)
-python scrapers/bibliometro_details.py
-```
+## 🛠️ Comandos de Desarrollo
+
+- `npm run dev`: Inicia servidor con auto-recarga.
+- `npm start`: Servidor optimizado para producción.
+
+## 📝 Licencia
+
+ISC
