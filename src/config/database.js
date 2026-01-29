@@ -13,15 +13,30 @@ if (dns.setDefaultResultOrder) {
     }
 }
 
-const sequelize = new Sequelize(process.env.DATABASE_URL, {
-    dialect: 'postgres',
-    logging: false, // Set to console.log to see SQL queries
-    dialectOptions: {
-        ssl: {
-            require: true,
-            rejectUnauthorized: false
+const dbUrl = process.env.DATABASE_URL;
+let sequelize;
+
+if (!dbUrl || dbUrl === 'PONER_AQUI_VALOR_DE_DATABASE_URL') {
+    console.warn('⚠️ DATABASE_URL no está definida. El backend funcionará en MODO DEMO (solo lectura de datos estáticos).');
+    sequelize = {
+        authenticate: async () => { throw new Error('DB not configured'); },
+        sync: async () => { console.log('ℹ️ Saltando sincronización de DB (Modo Demo)'); },
+        getDialect: () => 'none',
+        define: () => ({}),
+        fn: (name) => name,
+        col: (name) => name
+    };
+} else {
+    sequelize = new Sequelize(dbUrl, {
+        dialect: 'postgres',
+        logging: false, // Set to console.log to see SQL queries
+        dialectOptions: {
+            ssl: {
+                require: true,
+                rejectUnauthorized: false
+            }
         }
-    }
-});
+    });
+}
 
 export default sequelize;

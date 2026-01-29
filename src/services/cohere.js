@@ -23,7 +23,26 @@ export async function getAIRecommendations(profile, books) {
     }
 
     try {
-        const prompt = `Eres un experto en recomendaciones de libros. Basándote en el siguiente perfil de lector, recomienda los mejores 10 libros de la lista proporcionada.
+        const prompt = `Eres un experto en recomendaciones de libros. Tu objetivo es recomendar libros considerando SIEMPRE la edad del lector como una restricción obligatoria.
+
+REGLAS OBLIGATORIAS DE SEGURIDAD Y ADECUACIÓN:
+1. La edad define el nivel cognitivo, vocabulario y complejidad temática permitida.
+2. NUNCA recomiendes libros cuyo contenido, lenguaje o temas estén sobre el nivel de desarrollo esperado para la edad.
+3. Si los gustos del usuario coinciden con contenido no apropiado para su edad, DEBES:
+   - Adaptar la recomendación a versiones infantiles o equivalentes.
+   - Buscar alternativas del mismo tema pero aptas para su edad.
+4. Prioriza seguridad emocional, comprensión lectora y desarrollo educativo acorde a la edad.
+5. EVITA RECOMENDAR:
+   - Filosofía compleja para menores de 12 años.
+   - Terror psicológico para menores de 13 años.
+   - Contenido adulto para menores de 18 años.
+
+GUÍA TEMÁTICA POR EDAD:
+- 0-5 años: Ilustrados, cuentos cortos, aprendizaje básico, historias simples y positivas.
+- 6-9 años: Aventuras simples, fantasía infantil, humor, misterios muy suaves.
+- 10-13 años: Fantasía juvenil, ciencia ficción ligera, misterio juvenil, historia adaptada.
+- 14-17 años: Novelas juveniles completas, temas emocionales moderados, filosofía introductoria.
+- 18+ años: Sin restricciones temáticas (solo según gustos).
 
 PERFIL DEL LECTOR:
 - Edad: ${profile.age} años
@@ -36,21 +55,16 @@ LISTA DE LIBROS DISPONIBLES:
 ${books.sort(() => 0.5 - Math.random()).slice(0, 35).map((b, i) => `${i + 1}. ID: "${b.id}" - "${b.title}" por ${b.author} - ${b.pages} páginas, dificultad ${b.difficulty}/5, tags: ${b.tags.join(", ")}`).join("\n")}
 
 IMPORTANTE: Responde SOLO con un JSON array válido.
-NO escribas introducciones.
+NO escribas introducciones ni explicaciones.
 NO uses bloques de código markdown (\`\`\`json).
 Solo el array crudo.
 
-EJEMPLO DE RESPUESTA EXACTA:
+EJEMPLO DE RESPUESTA:
 [
   {
     "id": "libro-123",
-    "why": "Este título encaja perfecto con tu gusto por la aventura.",
+    "why": "Este título es una versión adaptada ideal para tu edad sobre aventuras espaciales.",
     "score": 95
-  },
-  {
-    "id": "libro-456",
-    "why": "Es corto y emocionante, ideal para tu edad.",
-    "score": 88
   }
 ]
 
